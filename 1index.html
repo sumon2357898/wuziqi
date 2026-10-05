@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五子棋 - 单机版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f0e1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 { color: #3a3a3a; margin-bottom: 10px; }
+  .info {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #555;
+    min-height: 28px;
+  }
+  .board-wrapper {
+    background: #d4a843;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(15, 36px);
+    grid-template-rows: repeat(15, 36px);
+    gap: 0;
+    position: relative;
+  }
+  .cell {
+    width: 36px;
+    height: 36px;
+    position: relative;
+    cursor: pointer;
+  }
+  /* 棋盘线 */
+  .cell::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #8b6914;
+  }
+  .cell::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #8b6914;
+  }
+  .cell:hover {
+    background: rgba(255,255,255,0.15);
+  }
+  .stone {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+  }
+  .stone.black {
+    background: radial-gradient(circle at 35% 35%, #666, #000);
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
+  }
+  .stone.white {
+    background: radial-gradient(circle at 35% 35%, #fff, #ccc);
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+  }
+  .cell.last-move .stone::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: red;
+  }
+  .cell.hint {
+    background: rgba(0, 200, 100, 0.35);
+  }
+  .cell.hint::before {
+    content: '💡';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    font-size: 16px;
+  }
+  .buttons {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+  }
+  button {
+    padding: 10px 22px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #5a9;
+    color: #fff;
+    transition: background 0.2s;
+  }
+  button:hover { background: #487; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  #undoBtn { background: #c77; }
+  #undoBtn:hover { background: #b66; }
+  #hintBtn { background: #77c; }
+  #hintBtn:hover { background: #66b; }
+  #restartBtn { background: #5a9; }
+</style>
+</head>
+<body>
+
+<h1>🎮 五子棋</h1>
+<div class="info" id="info">黑棋落子</div>
+
+<div class="board-wrapper">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="buttons">
+  <button id="undoBtn" onclick="undo()" disabled>↩ 悔棋</button>
+  <button id="hintBtn" onclick="showHint()">💡 提示</button>
+  <button id="restartBtn" onclick="restart()">🔄 重新开始</button>
+</div>
+
+<script>
+const SIZE = 15;
+let board = [];       // 0=空, 1=黑, 2=白
+let currentPlayer = 1; // 1
